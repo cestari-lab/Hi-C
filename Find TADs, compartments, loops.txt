@@ -1,0 +1,29 @@
+#Finding compartments, TADs, and loops. 
+#Compartment analysis with fan-c. Read documentation: https://fan-c.readthedocs.io/en/latest/index.html
+#Regions in a Hi-C matrix can generally be assigned to either the active or the inactive compartment, also called ‘A’ and ‘B’ compartments, respectively. 
+#The eigenvector of the correlation matrix is used to derive compartment type and strength for each matrix bin. 
+#Generally, regions with positive values are assigned the ‘A’ and regions with negative values the ‘B’ compartment. Use '-v' for this option.
+#If necessary, change matrix resolution, e.g. 50 Kb. 
+fanc compartments mydata.cool mydata.ab 
+
+#For eigenvector use:
+fanc compartments -v mydata.ev.txt mydata.cool mydata.ab 
+
+# You can use the genome to orient the A B comp according to GC content 
+fanc compartments -g genome.fasta -v mydata.ev-g.txt  mydata.ab 
+
+#plot the data per chromosome (here Chr11)
+fancplot -o mydata.ev-g_Chr11.png Chr11 -p square mydata.ab -c RdBu_r -p line mydata.ev-g.txt 
+
+#Identify loops and TADs using hicExplorer. Read the documentation: https://hicexplorer.readthedocs.io/en/latest/content/tools/hicDetectLoops.html#hicdetectloops
+#Find loops
+hicDetectLoops -m mydata.cool -o mydata-loops.bedgraph --maxLoopDistance 2000000 --windowSize 10 --peakWidth 6 --pValuePreselection 0.05 --pValue 0.05 
+
+#Find TADs. Read the documentation for the parameters
+hicFindTADs -m mydata.cool --outPrefix mydata_tad_thres0.005_delta0.01_fdr --minDepth 30000 --maxDepth 100000 --step 10000 --thresholdComparisons 0.01 --delta 0.005 --correctForMultipleTesting fdr -p 16 
+
+# Compare interTAD and intraTAD contacts between groups
+hicInterIntraTAD -m mydata.cool -td mydata_tad_thres0.005_delta0.01_fdr_domains.bed -o mydata_interintra_tad.tzt -op mydata_interintra_ratio.png -t 16 
+
+# Use pyGenomeTracks to plot the results. You need to generate track_triangle.ini. See documentation: https://pygenometracks.readthedocs.io/en/latest/
+hicPlotTADs --tracks track_triangle.ini --region Chr9:1-4,020,287 -o mydata_tads_chr9.png 

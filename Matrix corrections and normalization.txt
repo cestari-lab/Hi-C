@@ -1,0 +1,38 @@
+#Matrix corrections and normalization
+#Combine biological replicates, perform library normalization, corrections, and correlation analysis. Steps performed using HiCExplorer tools.
+
+# Analyze correlation between groups
+hicCorrelate -m mydata-rep1.cool mydata-rep2.cool mydata-rep3.cool --method=pearson --log1p --labels Rep1 Rep2 Rep3 --range 5000:200000 --outFileNameHeatmap mydata-hic_heatmap --outFileNameScatter mydata_hic_scatterplot 
+
+#Combine biological replicates
+hicSumMatrices --matrices mydata-rep1.cool mydata-rep2.cool mydata-rep3.cool --outFileName mydata_sum.cool
+
+#Bin matrices to 10 Kb
+hicMergeMatrixBins -m mydata_sum.cool -o mydata_sum10k.cool -nb 10 
+
+#Perform diagnostic and correction of the matrix.
+hicCorrectMatrix diagnostic_plot --matrix mydata_sum10k.cool -o mydata_sum10k.png 
+
+#Correct the matrix
+hicCorrectMatrix correct --matrix mydata_sum10k.cool --correctionMethod KR --outFileName mydata_sumcorr10k.cool 
+
+#If comparing conditions, e.g. treated vs non-treated, follow steps below. 
+#For normalization options, see documentation: https://hicexplorer.readthedocs.io/en/latest/index.html). 
+
+#Normalization of the matrices to the condition with the smallest matrix. 
+hicNormalize -m mydata_treated.cool mydata_nontreated.cool --normalize smallest -o wildtype_ns.cool mutant_ns.cool 
+
+# Alternatively, you can normalize the matrix from 0-1
+hicNormalize -m mydata_sum10k.cool --normalize norm_range -o mydata_sum10k_n0-1.cool 
+
+#Balance the matrix
+hicCorrectMatrix correct --matrix mydata_sum10k_n0-1.cool --correctionMethod KR --outFileName mydata_sum10k_n0-1c.cool 
+
+#Transform the matrix into observed/expected
+hicTransform -mmydata_sum10k_n0-1c.cool --method obs_exp -o mydata_sum10k_n0-1c_oe.cool 
+
+# Analyze counts vs distance
+hicPlotDistVsCounts -m mydata_sum10k_n0-1c.cool -o mydata_Counts_vs_Distance.png --labels 'mydata' --maxdepth 20000000 --plotsize 5 4.2 
+
+# Obtain library information
+hicInfo -m mydata_sum10k_n0-1c.cool --outFileName mydata_sum10k_n0-1c-info.txt

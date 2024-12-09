@@ -1,0 +1,63 @@
+#Align reads using bwa-mem. This is the most computationally demanding process. 
+#The specifications below were used for a fastq file containing 250M Illumina reads 150 bp paired-ends. 
+#After the alignment, most processes can be handled by a regular machine (e.g., ccpus = 8 and mem-per-cpu = 1G). Adjust as needed. 
+
+#!/bin/bash 
+
+#SBATCH --account=my_account 
+#SBATCH --time=4:00:00 
+#SBATCH --mem-per-cpu=400MB 
+#SBATCH --cpus-per-task=32 
+#SBATCH --job-name=bwa-mem_alignment 
+#SBATCH --output=/path/to/logs/bwa-mem-%j.log 
+
+module load StdEnv/2023 
+module load bwa/0.7.18 
+ 
+bwa mem -5SPM -t 32 /path/to/genome/genome.fasta \ 
+/path/to/trimmed-fastq/mydata_R1.fastq.gz \ 
+/path/to/trimmed-fastq/mydata_R2.fastq.gz \ 
+>/path/to/results/sam/mydata.sam 
+
+# Obtain contacts with pairtools for Hi-C with Illumina data
+
+#!/bin/bash 
+
+#SBATCH --account=my_account
+#SBATCH --time=05:00:00 
+#SBATCH --mem-per-cpu=1G 
+#SBATCH --cpus-per-task=6 
+#SBATCH --job-name=pairtools 
+#SBATCH --output=/path/to/logs/pairtools-%j.log 
+
+module load StdEnv/2020 
+module load python/3.10.2 
+source /path/to/env/pairtools_ENV/bin/activate 
+
+pairtools parse --walks-policy all\ 
+-c /path/to/genome/genome.sizes.genome \ 
+   /path/to/results/sam/mydata.sam\ 
+-o /path/to/results/pairs/mydata.pairs \ 
+--output-stats /path/to/results/pairs/mydata_pairs_stats.txt 
+
+# Obtain contacts with pairtools for Hi-C with Oxford nanopore data (Pore-C)
+
+To be added - get from Luiza  
+
+# Convert to matrix .cool
+
+#!/bin/bash 
+
+#SBATCH --account=my_account
+#SBATCH --time=00:45:00 
+#SBATCH --mem-per-cpu=5G 
+#SBATCH --cpus-per-task=3
+#SBATCH --job-name=cooler
+#SBATCH --output=cooler-%j.log
+
+cooler cload pairs -c1 2 -p1 3 -c2 4 -p2 5 chromosome.size:1000 mydata.pairs mydata.cool
+
+#Plot matrix using hicExplorer: https://hicexplorer.readthedocs.io/en/latest/index.html
+hicPlotMatrix -m mydata.cool --clearMaskedBins --vMin 1 --vMax 100000 --log1p -t 'mydata' --colorMap OrRd -o mydata.png 
+
+

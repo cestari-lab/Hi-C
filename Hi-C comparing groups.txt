@@ -1,0 +1,35 @@
+# Compare different matrixes. nt = non-treated; t =  treated.
+#It may be necessary to change resolution. For example, from 10K to 50K
+hicMergeMatrixBins -m mydata-10k.cool -o mydata-50k.cool -nb 5 
+
+#To compare matrices
+hicCompareMatrices -m mydata-nt.cool mydata-t.cool --operation log2ratio -o mydata_nt_vs_t.cool
+
+# Plot with hicPlotMatrix 
+hicPlotMatrix -m  mydata_nt_vs_t.cool --clearMaskedBins --region Chr9:1-4,020,287 --vMin -4 --vMax 4 -t 'Non-treated vs Treated' -o mydata_nt_vs_t.cool_Chr9.png 
+
+#Pentad can be helpful to compare interactions among compartments. See documentation: https://github.com/magnitov/pentad/tree/development 
+#Pentad is based on python. Check documentation for installation. 
+#First make sure the matrix is balanced
+cooler balance mydata.cool
+
+#Get cis contacts
+python get_pentad_cis.py --cutoff 100000 --out_pref mydata_cis mydata.cool mydata.ev.txt::ev 
+#Get strength of contacts
+python quant_strength_cis.py mydata.cool mydata.ev.txt::ev --out_pref mydata_cis_strength 
+#Plot cis results
+python plot_pentad.py mydata_cis.json --title 'Mydata cis compartments' --out_pref mydata_cis_compartments.png 
+#Get trans contacts
+python get_pentad_trans.py --cutoff 100000 --out_pref mydata_trans mydata.cool mydata.ev.txt::ev 
+#Get strength of contacts
+python quant_strength_trans.py mydata.cool mydata.ev.txt::ev --max_zeros 0.5 --out_pref mydata_trans_strength 
+#Plot trans results
+python plot_pentad.py mydata_trans.json --title 'Mydata trans compartments' --out_pref mydata_trans_compartments.png 
+
+ 
+
+
+
+
+
+
