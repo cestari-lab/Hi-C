@@ -14,7 +14,7 @@
 module load StdEnv/2023 
 module load bwa/0.7.18 
  
-bwa mem -5SPM -t 32 /path/to/genome/genome.fasta \ 
+bwa mem -5SP -t 32 /path/to/genome/genome.fasta \ 
 /path/to/trimmed-fastq/mydata_R1.fastq.gz \ 
 /path/to/trimmed-fastq/mydata_R2.fastq.gz \ 
 >/path/to/results/sam/mydata.sam 
@@ -40,9 +40,10 @@ pairtools parse --walks-policy all\
 -o /path/to/results/pairs/mydata.pairs \ 
 --output-stats /path/to/results/pairs/mydata_pairs_stats.txt 
 
-# Obtain contacts with pairtools for Hi-C with Oxford nanopore data (Pore-C)
 
-To be added - get from Luiza  
+
+# To obtain contacts with pairtools for Hi-C with Oxford nanopore data (Pore-C)
+# Use pairtools parse2
 
 # Convert to matrix .cool
 
@@ -59,5 +60,6 @@ cooler cload pairs -c1 2 -p1 3 -c2 4 -p2 5 chromosome.size:1000 mydata.pairs myd
 
 #Plot matrix using hicExplorer: https://hicexplorer.readthedocs.io/en/latest/index.html
 hicPlotMatrix -m mydata.cool --clearMaskedBins --vMin 1 --vMax 100000 --log1p -t 'mydata' --colorMap OrRd -o mydata.png 
+
 
 
